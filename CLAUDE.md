@@ -1,5 +1,17 @@
 # CLAUDE.md
 
+## Project skill routing (Dog-LRM)
+
+本仓库的领域知识沉淀在 `.claude/skills/` 三个 skill 里，按任务类型触发（详见各自 L1 description）：
+
+- 文献/方法机制问题（"XX 论文怎么做的"、比较路线、设计新模块前查相关工作）→ `surveying-dog-avatar-papers`
+- 设计决策与提案评审（"为什么当初这么设计"、"XX 试过吗"、新架构/表示/损失提案）→ `iterating-dog-lrm-design`（提案必须先过 dead-ends.md）
+- 跑训练/评测/排障（开训练、渲染对比、OOM/Ninja/shm 报错、斑点颗粒、loss 异常）→ `training-dog-lrm-experiments`（任何全量训练前必须冒烟）
+
+一个任务常横跨多个（如"加个新 loss 再训一版"→ 先 ② 评审再 ③ 执行）。新结论当场沉淀回对应 skill 的 L3 文件。
+
+---
+
 Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.

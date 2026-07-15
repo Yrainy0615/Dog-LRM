@@ -69,3 +69,21 @@ gfpgan/
 .bashrc
 # BARC cloned locally (license-gated SMBLD model + nested .git); clone yourself, see SETUP.md
 third_party/
+# BARC checkpoint weights (real copy lives inside third_party/barc_release/checkpoint/)
+checkpoint/
+# raw multi-view capture dataset (large, not code)
+received_data_from_Pinstudio_20260424/
+# fur diffusion training data + codec (regenerable via preprocess/blender_fur_dataset.py + prep_student_data.py)
+synth_fur/
+# nested per-scene fur-teacher repo (own .git; superseded by teacher-free diffusion route)
+NeuralFur/
+# local env / tool caches, not portable across machines
+.torch_home/
+.torch_ext_lhm/
+.blender/
+.cache/
+.cursor/
+.worktrees/
+# local Claude Code session state (skills/ is committed, session settings are not)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

@@ -100,17 +100,24 @@ def read_images_binary(path):
 
 
 def read_images_text(path):
+    # A metadata line has 10 tokens ending in the image filename; the following
+    # 2D-points line may be empty. Detect metadata lines by structure rather than
+    # striding by 2 (an empty points line would otherwise break even/odd pairing).
     images = {}
     with open(path) as fid:
-        lines = [l.strip() for l in fid if l.strip() and l[0] != "#"]
-    for i in range(0, len(lines), 2):  # every 2nd line is the 2D-points line
-        e = lines[i].split()
-        image_id = int(e[0])
-        qvec = np.array([float(x) for x in e[1:5]])
-        tvec = np.array([float(x) for x in e[5:8]])
-        camera_id = int(e[8])
-        name = e[9]
-        images[image_id] = Image(image_id, qvec, tvec, camera_id, name)
+        for line in fid:
+            line = line.strip()
+            if not line or line[0] == "#":
+                continue
+            e = line.split()
+            if len(e) < 10 or not e[9].lower().endswith((".jpg", ".jpeg", ".png")):
+                continue  # 2D-points line, not metadata
+            image_id = int(e[0])
+            qvec = np.array([float(x) for x in e[1:5]])
+            tvec = np.array([float(x) for x in e[5:8]])
+            camera_id = int(e[8])
+            name = e[9]
+            images[image_id] = Image(image_id, qvec, tvec, camera_id, name)
     return images
 
 

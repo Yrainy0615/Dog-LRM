@@ -8,23 +8,47 @@ See `ANIMAL_LHM_PLAN.md` for the design and `preprocess/README.md` for the data 
 
 ## 1. Environment
 
+Verified recipe (CUDA 12.x driver ≥535, Python 3.10). Order and pins matter — see notes.
+
 ```bash
 conda create -n dog-lrm python=3.10 -y
 conda activate dog-lrm
 
-# PyTorch (match your CUDA; example cu118)
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# 1) PyTorch — cu121 wheels (work with driver 535; use cu118 for older drivers)
+pip install torch==2.1.2 torchvision==0.16.2 --index-url https://download.pytorch.org/whl/cu121
 
-# Preprocessing deps
-pip install "numpy<1.24"          # chumpy uses deprecated np aliases; >=1.24 breaks it
-pip install chumpy                # BARC loads the SMBLD .pkl via chumpy
-pip install pillow scipy trimesh
-pip install transformers          # BiRefNet weights via HuggingFace (Stage 2)
+# 2) Other deps (transformers pinned to a torch-2.1-compatible release)
+pip install pillow scipy trimesh "transformers==4.46.3"
 
-# pytorch3d (silhouette renderer, Stage 4) — install matched to your torch/CUDA:
-# https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md
-pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+# 3) numpy LAST, pinned (chumpy needs deprecated np aliases removed in >=1.24)
+pip install "numpy<1.24"
+
+# 4) chumpy with --no-build-isolation (its setup.py imports pip, hidden by PEP-517 isolation)
+pip install chumpy --no-build-isolation
+
+# 5) pytorch3d — prebuilt wheel for this exact combo (py310 / cu121 / torch2.1.2); no source build
+pip install fvcore iopath
+pip install --no-cache-dir --no-deps pytorch3d \
+  -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu121_pyt212/download.html
+
+# 6) BARC inference deps (its model imports these). Pin opencv<4.10 so it keeps numpy 1.x.
+pip install "opencv-python-headless<4.10" FrEIA pymp-pypi matplotlib pandas pycocotools importlib_resources
+pip install "numpy<1.24"   # re-pin: some of the above try to pull numpy 2.x
 ```
+
+**BARC gotchas:** its vendored `pilutil` uses removed Pillow APIs → `barc_infer.py` ships
+its own crop loader instead of BARC's `ImgCrops`. Its `SilhRenderer` is locked to
+pytorch3d 0.2.5/0.6.1 → `barc_infer.py` stubs it (params are computed before rendering).
+
+**Gotchas hit & fixed:**
+- `transformers>=5` requires torch≥2.4 and silently disables PyTorch on 2.1.2 → pin `4.46.3`.
+- `chumpy` build fails under PEP-517 isolation (`No module named 'pip'`) → `--no-build-isolation`.
+- pytorch3d `--no-index` blocks its deps `fvcore`/`iopath` → install them first, then `--no-deps`.
+
+Verified versions (`pip freeze`): torch 2.1.2+cu121, numpy 1.23.5, chumpy 0.70,
+pytorch3d 0.7.5, transformers 4.46.3, scipy 1.15.3, trimesh 4.12.2.
+Sanity: `python -c "import torch,chumpy,pytorch3d;print(torch.cuda.is_available())"` → `True`,
+and BARC `SMAL()` loads (num_betas=54, 7774 faces).
 
 ## 2. Clone BARC (dog SMAL model — NOT committed to this repo)
 
